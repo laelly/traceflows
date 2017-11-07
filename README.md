@@ -12,4 +12,4 @@ Perl modules
 - XML::Hash::XS
 - Minion
 - Sort::Key
-
+- Mojolicious::Plugin::Authentication

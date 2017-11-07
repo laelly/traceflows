@@ -86,6 +86,7 @@ function init_dataTables() {
 	var table = $('#table_rules').DataTable( {
 		// order: [[ 0, "asc" ]],
 		aaSorting: [],	// do not sort by default
+		ordering: false,	// disable sortering on columns
 		stripeClasses: [],
 		language: dt_language_EN,
 		responsive: false,
@@ -96,6 +97,9 @@ function init_dataTables() {
 		colReorder: {
 			fixedColumnsLeft: 1
 		},
+		rowGroup: {
+            dataSrc: 'section'
+        },
 		columns: [
 			{
 				data: "seq",
@@ -164,9 +168,24 @@ function init_dataTables() {
 			} else {
 				$(row).addClass('row_hoverhighlight');
 			}
+			$(row).addClass( 'toggle_section_'+data['section'].replace(/[^a-zA-Z0-9_-]/g,'_') );
 		}
 	} );
-	// table.columns().every( enableSearchBoxesFooter );
+	$('#table_rules tbody').on( 'click', 'tr.group', function () {		// collapse rows from given rowgroup on click
+		var rows = $(this).nextUntil('.group');
+		if ( $(this).next().hasClass('hidden') ) {
+			$(rows).removeClass('hidden');
+		} else {
+			$(rows).addClass('hidden');
+		}
+	});
+	$('#table_rules tbody').on( 'dblclick', 'tr.group', function () {		// collapse all rowgroups on dblclick
+		if ( $(this).next().hasClass('hidden') ) {
+			$('#table_rules tbody tr:not(.group)').removeClass('hidden');
+		} else {
+			$('#table_rules tbody tr:not(.group)').addClass('hidden');
+		}
+	});
 }
 
 
@@ -177,21 +196,21 @@ function render_ipaddr_fields ( data, type, row ) {
 	var i, j, out = '';
 	for (i = 0; i < data.length; ++i) {	// iterate other all fields' elements
 		if ( data[i]['type'] == 'ipgroup' || data[i]['type'] == 'ipgroup_with_exclusion' ) {
+			out += '<span class="obj_group_container">';		// BEGIN: group container
 			// group name
-			out += data[i]['negate'] ? '<div class="obj_group">'+data[i]['name']+'</div>' : '<div class="obj_group negate">'+data[i]['name']+'</div>';
+			out += data[i]['negate'] ? '<div class="obj_group negate">'+data[i]['name']+'</div> ' : '<div class="obj_group">'+data[i]['name']+'</div> ';
 			// subgroups from group
 			if ( data[i]['content_groups'] ) {
 				data[i]['content_groups'].forEach( function(e) {
-					out += '<div class="obj_subgroup">'+e+'</div>';
+					out += '<div class="obj_subgroup">'+e+'</div> ';
 				});
 			}
 			if ( data[i]['content_groups_negate'] ) {
 				data[i]['content_groups_negate'].forEach( function(e) {
-					out += '<div class="obj_subgroup negate">'+e+'</div>';
+					out += '<div class="obj_subgroup negate">'+e+'</div> ';
 				});				
 			}
 			// content from group
-			// if ( data[i]['content'].length || data[i]['content_negate'].length ) {
 			var obj = data[i]['content'], obj_negate = data[i]['content_negate'];
 			if ( obj || obj_negate ) {
 				if ( obj ) { out += '<div class="obj_content_container">'+obj.join(', '); }
@@ -203,17 +222,22 @@ function render_ipaddr_fields ( data, type, row ) {
 				}
 				out += '</div>';
 			}
+			out += '</span>';	// END: group container
 		} else {
-			var obj = data[i]['name'] == 'Any' ? ['Any'] : data[i]['value'];
-			if ( data[i]['negate'] ) {
-				obj.forEach( function(e) {
-					out += '<div class="obj negate">'+e+'</div>';
-				});
-			} else {
-				obj.forEach( function(e) {
-					out += '<div class="obj">'+e+'</div>';
-				});
-			}
+			out += '<span class="obj_group_container">';
+			out += '<div class="obj">'+data[i]['name']+'</div> ';
+			out += '<div class="obj_content_container">'+data[i]['value'].join(', ')+'</div>';
+			out += '</span>';
+			// if ( data[i]['name'] == 'Any' ) {
+				// out += '<span class="obj_group_container">';
+				// out += '<div class="obj">'+data[i]['name']+'</div>';
+				// out += '<div class="obj_content_container">'+data[i]['value'].join(', ')+'</div>';
+			// } else {
+				// var negate = data[i]['negate'] ? ' negate' : '';
+				// data[i]['value'].forEach( function(e) {
+					// out += '<div class="obj'+negate+'">'+e+'</div>';
+				// });
+			// }
 		}
 	}
 	return out;
@@ -223,12 +247,13 @@ function render_service_fields ( data, type, row ) {
 	var i, j, out = '';
 	for (i = 0; i < data.length; ++i) {	// iterate other all fields' elements
 		if ( data[i]['type'] == 'servicegroup' || data[i]['type'] == 'servicegroup_with_exclusion' ) {
+			out += '<span class="obj_group_container">';		// BEGIN: group container
 			// group name
-			out += data[i]['negate'] ? '<div class="obj_group">'+data[i]['name']+'</div>' : '<div class="obj_group negate">'+data[i]['name']+'</div>';
+			out += data[i]['negate'] ? '<div class="obj_group negate">'+data[i]['name']+'</div> ' : '<div class="obj_group">'+data[i]['name']+'</div> ';
 			// subgroups from group
 			if ( data[i]['content_groups'] ) {
 				data[i]['content_groups'].forEach( function(e) {
-					out += '<div class="obj_subgroup">'+e+'</div>';
+					out += '<div class="obj_subgroup">'+e+'</div> ';
 				});
 			}
 			if ( data[i]['content_groups_negate'] ) {
@@ -237,29 +262,23 @@ function render_service_fields ( data, type, row ) {
 				});				
 			}
 			// content from group
-			// if ( data[i]['content'].length || data[i]['content_negate'].length ) {
 			var obj = data[i]['content'], obj_negate = data[i]['content_negate'];
 			if ( obj || obj_negate ) {
 				if ( obj ) { out += '<div class="obj_content_container">'+obj.join(', '); }
 				if ( obj && obj_negate ) { out += ', ' }
 				if ( obj_negate ) { 
 					obj_negate.forEach( function(e) {
-						out += '<div class="negate">'+e+'</div>, ';
+						out += '<div class="negate">'+e+'</div> ';
 					});
 				}
 				out += '</div>';
 			}
+			out += '</span>';	// END: group container
 		} else {
-			var obj = data[i]['name'] == 'Any' ? ['Any'] : data[i]['value'];
-			if ( data[i]['negate'] ) {
-				obj.forEach( function(e) {
-					out += '<div class="obj negate">'+e+'</div>';
-				});
-			} else {
-				obj.forEach( function(e) {
-					out += '<div class="obj">'+e+'</div>';
-				});
-			}
+			out += '<span class="obj_group_container">';
+			out += '<div class="obj">'+data[i]['name']+'</div> ';
+			out += '<div class="obj_content_container">'+data[i]['value'].join(', ')+'</div>';
+			out += '</span>';
 		}
 	}
 	return out;

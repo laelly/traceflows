@@ -8,6 +8,12 @@ body {
 	padding-top: 50px;	/* topbar is 50px high */
 }
 
+/* trace button */
+#trace {
+	margin-top: 10px;
+	float:right;
+}
+
 /***************
 * Search Frame
 ***************/
@@ -16,6 +22,9 @@ div.TF_frame {
 	padding: 10px 10px;	/* top/bottom left/right */
 	background-color: #f5f5f5;
 	border: 1px solid #e3e3e3;
+}
+div.TF_frame td {
+    font-family: Times New Roman, sans-serif;
 }
 textarea#TF_input_textarea,
 input#TF_input_textarea {
@@ -53,7 +62,7 @@ table tr.row_red:hover {
     background-color: #ffcccc !important;
 }
 table tr.row_disabled {
-	color: #737373 !important;
+	/* color: #737373 !important; */
     background-color: #e8e8e8 !important;
 	-webkit-print-color-adjust: exact;
 }
@@ -89,7 +98,7 @@ table.TF_table td.cell_vcenter {
 	vertical-align: middle;
 }
 table.TF_table td > .headers_row {
-	font-weight: bold;
+	font-weight: bolder;
 	color: #337ab7;
 }
 table.TF_table th.headers_col {
@@ -132,6 +141,9 @@ div.dataTables_wrapper div.dataTables_length label {
 table.dataTable {
     border-collapse: collapse !important;
 }
+table tr.group {
+	cursor: pointer;
+}
 
 /*#####################################
 ** BOOTSTRAP modifications
@@ -156,3 +168,54 @@ button.navbar-right {
 }
 
 
+/*#####################################
+** Firewall Objects
+#####################################*/
+/***************
+* Firewall objects
+***************/
+.obj_group,
+.obj_group:link,
+.obj_group:visited {
+	color: #000099;		/* dark blue */
+	font-weight: bold;
+	display: inline-block !important;
+}
+
+.obj_subgroup,
+.obj_subgroup:link,
+.obj_subgroup:visited {
+	color: #7300e6;		/* purple */
+	display: inline-block !important;
+}
+.negate {
+	text-decoration: line-through;
+}
+.obj,
+.obj:link,
+.obj:visited {
+	font-weight: bold;
+	display: inline-block !important;
+}
+.obj_content_container{
+	color: #737373;
+	display: inline-block !important;
+}
+.obj_group_container{
+	display: block;
+}
+
+.obj_group,
+.obj {
+    padding: 0px 6px 0px 6px;
+    margin: 1px -1px 1px 0px;
+    border: 1px solid #ccc;
+    -moz-border-radius: 1em;
+    -webkit-border-radius: 1em;
+    border-radius: 1em;
+    /* background-color: #99CCFF; */
+    /* background-color: transparent; */
+    /* background-color: #e9f5ff; */
+    background-color: #f9f9f9;
+	cursor: pointer;
+}
