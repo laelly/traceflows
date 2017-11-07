@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>Traceflows</title>
+		<%= include 'layouts/head' =%>
+	</head>
+	<body>
+		<%= include 'layouts/topbar' =%>
+		<div class="panel panel-default TF_frame">
+		<!-- <div class="panel-body"> -->
+			<table class="main">
+				<tr>
+					<td rowspan="100%" style="width: 61%;">
+						<input id="TF_input_textarea"></input>
+						<input type="button" style="float:right;margin-right:5px" id="trace" value="Trace!" onclick="generateResponse()">
+					</td>
+					<td colspan="100%" style="height: 50px;" valign="top" style="padding-left:10px;">
+						
+					</td>
+				</tr>
+				<tr id="firewall_status">
+				</tr>
+				<tr colspan="100%">
+					<td colspan="100%" style="height:30px;padding-left:72px;padding-bottom:0px;">
+					 <img src="images/refresh_button.png" id="refresh" alt="refresh" data-toggle="tooltip" data-placement="right" title="Refresh firewall status" height="25" width="25" style="cursor: pointer;">
+					</td>
+				</tr>
+			</table>
+		<!-- </div> -->
+		</div>
+		<div id="content"  class="panel panel-default TF_frame">
+			<div id="result">			
+				<table id="table_rules" class="TF_table table table-bordered rules">
+					<thead>
+					<tr>
+						<th class="headers_col cell_hcenter" column-togglable="false">seq</th>
+						<th class="headers_col cell_hcenter">enabled</th>
+						<th class="headers_col cell_hcenter">action</th>
+						<th class="headers_col cell_hcenter">logging</th>
+						<th class="headers_col">source</th>
+						<th class="headers_col">destination</th>
+						<th class="headers_col">service</th>
+						<th class="headers_col">comment</th>
+					</tr>
+					</thead>
+					<tbody>
+						<tr><td colspan="100%" class="dataTables_empty" valign="top" align="center">Initialisation en cours...</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<%= include 'layouts/footer' =%>
+	</body>
+</html>

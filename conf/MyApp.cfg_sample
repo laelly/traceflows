@@ -1,0 +1,31 @@
+[hypnotoad]
+; listen=http://127.0.0.1:9001
+listen=http://*:9001
+; listen=https://*:443?cert=/etc/ssl/certs/server.crt&key=/etc/ssl/private/server.key
+workers=4
+clients=20
+pid_file=pid/MyApp.pid
+graceful_timeout=15
+inactivity_timeout=10
+requests=50
+
+[database]
+db_host=127.0.0.1
+db_port=5432
+db_name=traceflows
+db_username=traceflows
+db_password=traceflows
+
+[logging]
+access_log=log/access.log
+access_log_format=common
+log=log/application.log
+log_level=info
+
+[application]
+; 'development' for debugging otherwise 'production'
+mode=development
+; secrets are for cookie signing and session management
+secrets=_!TR4c3fl0ws!_
+cookie_name=Traceflows
+session_expiration=3600

@@ -1,0 +1,4 @@
+		<%= include 'layouts/favicon' =%>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css?v=3.3.7" />
+		<link rel="stylesheet" type="text/css" href="css/datatables.min.css?v=1.10.16" />
+		<link rel="stylesheet" type="text/css" href="css/my.css" />

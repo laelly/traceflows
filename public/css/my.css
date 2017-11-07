@@ -1,0 +1,158 @@
+/*#####################################
+** MAIN
+#####################################*/
+/* Body */
+body {
+    background-color: #FBFBFB;
+    min-width: 1200px;
+	padding-top: 50px;	/* topbar is 50px high */
+}
+
+/***************
+* Search Frame
+***************/
+div.TF_frame {	
+	margin: 10px 10px;	/* top/bottom left/right */
+	padding: 10px 10px;	/* top/bottom left/right */
+	background-color: #f5f5f5;
+	border: 1px solid #e3e3e3;
+}
+textarea#TF_input_textarea,
+input#TF_input_textarea {
+	width: 700px;
+	height: 230px;
+	border: 1px solid grey;
+	margin: 0px;
+	padding: 3px 5px;
+    background-image: url("/images/traceflows.png");
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-color: white;
+}
+
+/***************
+* Table
+***************/
+table {
+	width: 100% !important;
+	max-width: 100% !important;
+}
+/* Row colors*/
+table tr.row_green {
+    background-color: #f2ffe6 !important;
+	-webkit-print-color-adjust: exact;
+}
+table tr.row_green:hover {
+    background-color: #caff99 !important;
+}
+table tr.row_red {
+    background-color: #ffebeb !important;
+	-webkit-print-color-adjust: exact;
+}
+table tr.row_red:hover {
+    background-color: #ffcccc !important;
+}
+table tr.row_disabled {
+	color: #737373 !important;
+    background-color: #e8e8e8 !important;
+	-webkit-print-color-adjust: exact;
+}
+table tr.row_disabled:hover {
+    background-color: #d9d9d9 !important;
+}
+table tr.row_hoverhighlight:hover {
+    background-color: #e6f5ff !important;
+}
+
+/* Cell colors*/
+table td.cell_green {
+	color: #009933 !important;
+}
+table td.cell_red {
+	color: #ff0000 !important;
+}
+
+/* .TF_table */
+table.TF_table thead > tr {
+	background-color:#cccccc;
+}
+table.TF_table th.cell_center,
+table.TF_table td.cell_center,
+table.TF_table th.cell_hcenter,
+table.TF_table td.cell_hcenter {
+	text-align: center;
+}
+table.TF_table th.cell_center,
+table.TF_table td.cell_center,
+table.TF_table th.cell_vcenter,
+table.TF_table td.cell_vcenter {
+	vertical-align: middle;
+}
+table.TF_table td > .headers_row {
+	font-weight: bold;
+	color: #337ab7;
+}
+table.TF_table th.headers_col {
+	font-weight: bold;
+	/* color: #337ab7; */
+}
+
+/* #table_rules */
+table#table_rules th.headers_col {
+	font-size: 11pt;
+}
+table#table_rules {
+	font-size: 10pt;
+}
+
+/* table#table_rules td:nth-child(1), */
+/* table#table_rules td:nth-child(2), */
+/* table#table_rules td:nth-child(3), */
+/* table#table_rules td:nth-child(4) { */
+	/* text-align: center; */
+/* } */
+
+
+/*#####################################
+** DataTable modifications
+#####################################*/
+.dataTables_wrapper .dataTables_length {
+    float: left;
+	vertical-align:middle; 
+	line-height: 33px;
+}
+div.dataTables_wrapper div.dataTables_length label {
+	margin-right: 15px;
+}
+
+.dataTables_wrapper .dataTables_filter {
+    float: right;
+    text-align: right;
+}
+table.dataTable {
+    border-collapse: collapse !important;
+}
+
+/*#####################################
+** BOOTSTRAP modifications
+#####################################*/
+/***************
+* Navbar
+***************/
+.navbar-default {
+    background-color: #eaeaea;
+	border-color: #d9d9d9;
+}
+.navbar-default .navbar-nav > li > a:hover {
+    background-color: #d1d1d1;
+}
+
+/* Fix weird objects positionning */
+.navbar-text {
+	margin-right: 15px !important;
+}
+button.navbar-right {
+	margin-right: -5px;
+}
+
+
