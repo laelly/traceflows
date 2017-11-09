@@ -154,18 +154,7 @@ function init_dataTables() {
 			data: function ( d ) {
 				d.fw = 'test';
 			},
-			dataSrc: 'rules',
-            error: function (jqXHR) {
-				if (jqXHR.status == 403) {			// Unauthenticated
-					alert_message_error('Not authenticated, redirecting to login page...');
-					window.location.replace('/login');
-				} else if ( jqXHR.status == 0 ) {
-					alert_message_error('Unable to initialize Datatable. No answer from server for url '+this.url);
-				} else {
-					alert_message_error('Unable to initialize Datatable. '+jqXHR.status+' '+jqXHR.statusText+' on url '+this.url);
-				}
-				$('#table_rules tbody > tr > td').first().html('Error: Unable to fetch data...');
-            }
+			dataSrc: 'rules'
 		},
 		createdRow: function (row, data) {
 			// Enable values: 0=disabled, 1=enabled
@@ -222,13 +211,13 @@ function render_ipaddr_fields ( data, type, row ) {
 					});
 				}
 			}
-			out += '</div> ';	// END: obj content container
-			out += '</span> ';	// END: group container
+			out += '</div>';	// END: obj content container
+			out += '</span>';	// END: group container
 		} else {
 			out += '<span class="obj_container">';
 			out += '<div class="obj">'+data[i]['name']+'</div> ';
-			out += '<div class="obj_content_container hidden">'+data[i]['value'].join(', ')+'</div> ';
-			out += '</span> ';
+			out += '<div class="obj_content_container hidden">'+data[i]['value'].join(', ')+'</div>';
+			out += '</span>';
 			// if ( data[i]['name'] == 'Any' ) {
 				// out += '<span class="obj_container">';
 				// out += '<div class="obj">'+data[i]['name']+'</div>';
@@ -263,7 +252,7 @@ function render_service_fields ( data, type, row ) {
 			}
 			if ( data[i]['content_groups_negate'] ) {
 				data[i]['content_groups_negate'].forEach( function(e) {
-					out += '<div class="obj_subgroup negate">'+e+'</div> ';
+					out += '<div class="obj_subgroup negate">'+e+'</div>';
 				});				
 			}
 			
@@ -277,62 +266,20 @@ function render_service_fields ( data, type, row ) {
 						out += '<div class="negate">'+e+'</div> ';
 					});
 				}
+				out += '</div>';
 			}
-			out += '</div> ';	// END: obj content container
+			out += '</div>';	// END: obj content container
 			out += '</span>';	// END: group container
 		} else {
 			out += '<span class="obj_container">';
 			out += '<div class="obj">'+data[i]['name']+'</div> ';
-			out += '<div class="obj_content_container hidden">'+data[i]['value'].join(', ')+'</div> ';
+			out += '<div class="obj_content_container hidden">'+data[i]['value'].join(', ')+'</div>';
 			out += '</span>';
 		}
 	}
 	return out;
 }
 
-function alert_message_error (message) {
-		if ( $("#TF_errorbox .alert").length >= 4 ) {	// > 5
-			$("#TF_errorbox .alert").first().remove();
-		} else if ( $("#TF_errorbox .alert").length >= 3 ) {	// > 4
-			$("#TF_errorbox .alert").first().dequeue().fadeOut(1000, function () { $(this).remove(); });
-		}
-		var out = '<div class="alert alert-danger alert-dismissable">';
-		out += '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>';
-		out += '<strong>Error:</strong> '+message;
-		out += '</div>';
-		$('#TF_errorbox').append( out );
-		$("#TF_errorbox .alert").last().delay(10000).fadeOut(1000, function () { $(this).remove(); });
-		// $("#TF_errorbox .alert").last().hide().fadeIn(200).delay(30000).fadeOut(1000, function () { $(this).remove(); });
-}
-
-//###################################
-// Trace! Button
-//###################################
-function sendRequest () {
-	$.post( '/home', { query: "test", data: "ok!" }, function( data ) {
-		// $( ".result" ).html( data );
-	});
-	// $.ajax({
-		// type: "POST",
-		// url: 'home',
-		// data: 'query=test',
-		// success: success,
-		// dataType: dataType
-	// });
-}
-
-$.ajaxSetup({
-    error: function (jqXHR) {
-        if (jqXHR.status == 403) {			// Unauthenticated
-			alert_message_error('Not authenticated, redirecting to login page...');
-			window.location.replace('/login');
-		} else if ( jqXHR.status == 0 ) {
-			alert_message_error('No answer from server for url '+this.url);
-        } else {
-			alert_message_error(jqXHR.status+' '+jqXHR.statusText+' on url '+this.url);
-		}
-    }
-});
 
 //###################################
 // Bind event handler
@@ -342,7 +289,6 @@ function bindEventHandlers() {
 	// Click event on objects
 	**********************/
 	$('#table_rules tbody').on("click", ".obj_group, .obj", function(event){		/* on click */
-		if ( getSelection().toString() ) { return; }		// exit event if click is made for selecting text
 		var obj = $(this).next('.obj_content_container');
 		obj.hasClass('hidden') ?	obj.removeClass('hidden') : obj.addClass('hidden');
 	});
@@ -351,7 +297,6 @@ function bindEventHandlers() {
 		obj.first().hasClass('hidden') ?	obj.removeClass('hidden') : obj.addClass('hidden');
 	});
 	$('#table_rules tbody').on( 'click', 'tr.group', function () {		// collapse rows from given rowgroup on click
-		if ( getSelection().toString() ) { return; }		// exit event if click is made for selecting text
 		var rows = $(this).nextUntil('.group');
 		$(this).next().hasClass('hidden') ?	$(rows).removeClass('hidden') : $(rows).addClass('hidden');
 	});
@@ -359,10 +304,6 @@ function bindEventHandlers() {
 		$(this).next().hasClass('hidden') ?	$('#table_rules tbody tr:not(.group)').removeClass('hidden') :
 															$('#table_rules tbody tr:not(.group)').addClass('hidden');
 	});
-	
-	/**********************
-	// Alert messages
-	**********************/
 	
 	/**********************
 	// Tooltip

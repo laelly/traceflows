@@ -72,6 +72,10 @@ get "/home" => sub {
 		# $c->redirect_to('/login');
 	# }
 };
+post "/home" => sub {
+	my $c = shift;
+	$c->render(text => 'Oops.', status => 404);
+};
 
 
 #***************************************

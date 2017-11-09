@@ -179,14 +179,14 @@ button.navbar-right {
 .obj_group:visited {
 	color: #000099;		/* dark blue */
 	font-weight: bold;
-	display: inline-block !important;
+	display: inline-block;
 }
 
 .obj_subgroup,
 .obj_subgroup:link,
 .obj_subgroup:visited {
 	color: #7300e6;		/* purple */
-	display: inline-block !important;
+	display: inline-block;
 }
 .negate {
 	text-decoration: line-through;
@@ -195,18 +195,18 @@ button.navbar-right {
 .obj:link,
 .obj:visited {
 	font-weight: bold;
-	display: inline-block !important;
+	display: inline-block;
 }
 .obj_content_container{
 	color: #737373;
-	display: inline-block !important;
+	display: inline-block;
 }
-.obj_group_container{
+.obj_container{
 	display: block;
 }
 
-.obj_group,
-.obj {
+.obj_group_old,
+.obj_old {
     padding: 0px 6px 0px 6px;
     margin: 1px -1px 1px 0px;
     border: 1px solid #ccc;
@@ -218,4 +218,21 @@ button.navbar-right {
     /* background-color: #e9f5ff; */
     background-color: #f9f9f9;
 	cursor: pointer;
+}
+
+
+/*#####################################
+** Bootstrap alerts
+#####################################*/
+#TF_errorbox {
+    position:fixed;
+    bottom:0px;
+    right:0px;
+    margin:0px;
+	z-index:999;
+	width:500px;
+}
+
+#TF_errorbox > div.alert {
+	margin: 0 5px 10px 0;	/* top right bottom left */
 }
