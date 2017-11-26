@@ -7,13 +7,14 @@
 		<%= include 'layouts/head' =%>
 	</head>
 	<body>
+		<%= include 'layouts/noscript' =%>
 		<%= include 'layouts/topbar' =%>
 		<div id="TF_errorbox"></div>
 		<div class="panel panel-default TF_frame">
 			<table class="main">
 				<tr>
 					<td>
-						<input id="TF_input_textarea"></input>
+						<textarea id="TF_input_textarea"></textarea>
 					</td>
 					<td rowspan="100%" width="99%">
 						
@@ -26,36 +27,7 @@
 				</tr>
 			</table>
 		</div>
-		<ul class="nav nav-tabs">
-			<li class="active"><a data-toggle="tab" href="#rules">Rules</a></li>
-			<li><a data-toggle="tab" href="#objects">Objects</a></li>
-		</ul>
-		<div class="panel panel-default TF_frame tab-content">
-			<!-- <div class="tab-content"> -->
-				<div id="rules" class="tab-pane fade in active">
-					<table id="table_rules" class="TF_table table table-bordered rules">
-						<thead>
-						<tr>
-							<th class="headers_col cell_hcenter col-md-1" column-togglable="false" style="max-width:30px !important">seq</th>
-							<th class="headers_col cell_hcenter col-md-1" style="max-width:40px !important;"><div style="overflow:hidden;">enabled</div></th>
-							<th class="headers_col cell_hcenter col-md-1" style="max-width:40px !important;"><div style="overflow:hidden;">action</div></th>
-							<th class="headers_col cell_hcenter col-md-1" style="max-width:40px !important;"><div style="overflow:hidden;">logging</div></th>
-							<th class="headers_col col-md-6">source</th>
-							<th class="headers_col col-md-6">destination</th>
-							<th class="headers_col col-md-4" style="min-width:18% !important">service</th>
-							<th class="headers_col col-md-3">comment</th>
-						</tr>
-						</thead>
-						<tbody>
-							<tr><td colspan="100%" class="dataTables_empty" valign="top" align="center">Initialisation en cours...</td></tr>
-						</tbody>
-					</table>
-				</div>
-				<div id="objects" class="tab-pane fade">
-					
-				</div>
-			<!-- </div> -->
-		</div>
+		<div id="TF_content"></div>
 		<%= include 'layouts/footer' =%>
 	</body>
 </html>

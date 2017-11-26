@@ -1,0 +1,23 @@
+<ul class="nav nav-tabs">
+	% if ( $parts->{rank} ) {
+		<li class="<%= $active_part eq "summary" ? 'active' : '' %>"><a data-toggle="tab" href="#summary">Summary</a></li>
+	% }
+	<li class="<%= $active_part eq "rules" ? 'active' : '' %>"><a data-toggle="tab" href="#rules">Rules</a></li>
+	% if ( $parts->{objects} ) {
+		<li><a data-toggle="tab" href="#objects">Objects</a></li>
+	% }
+</ul>
+<div class="panel panel-default TF_frame tab-content">
+	% if ( $parts->{rank} ) {
+		<div id="summary" class="tab-pane fade in <%= $active_part eq "summary" ? 'active' : '' %>">
+			<%= include 'parts/rank' =%>
+		</div>
+	% }
+	<div id="rules" class="tab-pane fade in <%= $active_part eq "rules" ? 'active' : '' %>">
+		<%= include 'parts/rules' =%>
+	</div>
+	% if ( $parts->{objects} ) {
+		<div id="objects" class="tab-pane fade in">			
+		</div>
+	% }
+</div>

@@ -1,0 +1,6 @@
+<noscript>
+	<div class="alert alert-danger alert-dismissable">
+		<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+		<strong>Error: </strong>JavaScript is currently disabled. The site will not work properly without it.
+	</div>
+</noscript>

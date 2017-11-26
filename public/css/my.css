@@ -11,7 +11,17 @@ body {
 /* trace button */
 #trace {
 	margin-top: 10px;
-	float:right;
+	float: right;
+}
+
+/***************
+* Others
+***************/
+.ws_nowrap {
+	white-space: nowrap;
+}
+.ws_pre {
+	white-space: pre;
 }
 
 /***************
@@ -26,8 +36,7 @@ div.TF_frame {
 div.TF_frame td {
     font-family: Times New Roman, sans-serif;
 }
-textarea#TF_input_textarea,
-input#TF_input_textarea {
+textarea#TF_input_textarea {
 	width: 700px;
 	height: 230px;
 	border: 1px solid grey;
@@ -37,6 +46,10 @@ input#TF_input_textarea {
 	background-repeat: no-repeat;
 	background-position: center center;
 	background-color: white;
+	resize: none;
+}
+textarea#TF_input_textarea.hidebackground {
+	background-image: none;
 }
 
 /***************
@@ -47,22 +60,21 @@ table {
 	max-width: 100% !important;
 }
 /* Row colors*/
-table tr.row_green {
-    background-color: #f2ffe6 !important;
-	-webkit-print-color-adjust: exact;
-}
+/* table tr.row_green { */
+    /* background-color: #f2ffe6 !important; */
+	/* -webkit-print-color-adjust: exact; */
+/* } */
 table tr.row_green:hover {
     background-color: #caff99 !important;
 }
-table tr.row_red {
-    background-color: #ffebeb !important;
-	-webkit-print-color-adjust: exact;
-}
+/* table tr.row_red { */
+    /* background-color: #ffebeb !important; */
+	/* -webkit-print-color-adjust: exact; */
+/* } */
 table tr.row_red:hover {
     background-color: #ffcccc !important;
 }
 table tr.row_disabled {
-	/* color: #737373 !important; */
     background-color: #e8e8e8 !important;
 	-webkit-print-color-adjust: exact;
 }
@@ -80,6 +92,15 @@ table td.cell_green {
 table td.cell_red {
 	color: #ff0000 !important;
 }
+table td.cell_bg_green {
+    background-color: #caff99 !important;
+	-webkit-print-color-adjust: exact;
+}
+table td.cell_bg_red {
+    background-color: #ffcccc !important;
+	-webkit-print-color-adjust: exact;
+}
+
 
 /* .TF_table */
 table.TF_table thead > tr {
@@ -99,7 +120,7 @@ table.TF_table td.cell_vcenter {
 }
 table.TF_table td > .headers_row {
 	font-weight: bolder;
-	color: #337ab7;
+	/* color: #337ab7; */
 }
 table.TF_table th.headers_col {
 	font-weight: bold;
@@ -114,13 +135,70 @@ table#table_rules {
 	font-size: 10pt;
 }
 
-/* table#table_rules td:nth-child(1), */
-/* table#table_rules td:nth-child(2), */
-/* table#table_rules td:nth-child(3), */
-/* table#table_rules td:nth-child(4) { */
-	/* text-align: center; */
-/* } */
 
+/***************
+* Rank
+***************/
+#table_rank {
+	border: none;
+}
+#table_rank td:first-child {
+	border-right: 1px solid #ddd;
+}
+#table_rank tr td {
+	border-top: 1px solid #ddd;
+}
+
+#table_rank tr:first-child,
+#table_rank tr:first-child td {
+	border-top: none !important;
+}
+.row_header {
+	color: #000099;
+	text-align: center;
+	font-weight: bold;
+	/* vertical-align: middle; */
+}
+div.column_auto {
+    /* dynamic column-width andled in JS */
+	-webkit-column-gap: 10px;
+	-moz-column-gap: 10px;
+	column-gap: 10px;
+}
+a.rule_number,
+a.rule_number:visited,
+a.rule_number:link {
+    color: #090;
+    font-weight: bold;
+}
+.rule_number::after {
+	content: ": ";
+	white-space: pre;
+}
+.rank_rule_container {
+	display: block;
+	font-family: Times New Roman, sans-serif;
+}
+.rank_rule_container div {	/* put all child objects on the same line */
+	display: inline-block;
+}
+.rank_exact_number {
+	color: #0c0;
+}
+.rank_field_container::after {
+	content: ",";
+}
+.rank_field_container:last-child::after {
+	content: "";
+}
+ul.rank_helper_content_list {
+	padding-left: 1em;
+	margin-bottom: 0;
+}
+ul.rank_helper_content_list > li {
+	list-style-type: disc;
+	display: list-item;
+}
 
 /*#####################################
 ** DataTable modifications
@@ -167,6 +245,23 @@ button.navbar-right {
 	margin-right: -5px;
 }
 
+/***************
+* Panel
+***************/
+.TF_heading {
+	background-color: #dfdfdf !important;
+}
+
+/***************
+* Popover
+***************/
+.popover-content {
+	font-weight: normal;
+}
+.popover{
+	max-width: 700px;
+}
+
 
 /*#####################################
 ** Firewall Objects
@@ -205,20 +300,21 @@ button.navbar-right {
 	display: block;
 }
 
-.obj_group_old,
-.obj_old {
+/* TEST: objects in a colored oval */
+/*.obj_group,
+.obj {
     padding: 0px 6px 0px 6px;
     margin: 1px -1px 1px 0px;
     border: 1px solid #ccc;
     -moz-border-radius: 1em;
     -webkit-border-radius: 1em;
-    border-radius: 1em;
+    border-radius: 1em;*/
     /* background-color: #99CCFF; */
     /* background-color: transparent; */
     /* background-color: #e9f5ff; */
-    background-color: #f9f9f9;
+/*    background-color: #f9f9f9;
 	cursor: pointer;
-}
+}*/
 
 
 /*#####################################

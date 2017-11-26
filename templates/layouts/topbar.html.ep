@@ -6,7 +6,7 @@
 			<li><a href="#">Placeholder 2</a></li>
 		</ul>
 		<button type="button" class="btn btn-default navbar-btn navbar-right" data-toggle="tooltip" data-placement="bottom" title="Disconnect from current session">Logout</button>
-		<p class="navbar-text navbar-right">Logged in as <a href="#" class="navbar-link">Test</a></p>
+		<p class="navbar-text navbar-right">Logged in as <a href="#" class="navbar-link"><%= $user->{uid} %></a>&#160(<%= $user->{role} %>)</p>
 		<ul class="nav navbar-nav navbar-right">
 			<li><a href="#">Placeholder 3</a></li>
 			<li class="dropdown">

@@ -15,6 +15,7 @@ sub register {
 	my ($self, $app, $args) = @_;
 	
 	$app->helper( rendering_from_hash => \&rendering_from_hash );
+	$app->helper( is_safe_input => \&is_safe_input );
 }
 
 
@@ -44,6 +45,9 @@ sub rendering_from_hash {
 	);
 };
 
+sub is_safe_input {
+	return $_[1] && $_[1] =~ m/[\<\>\"\']/ ? 0 : 1;
+}
 
 
 1;

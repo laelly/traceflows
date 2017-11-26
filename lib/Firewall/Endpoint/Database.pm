@@ -159,6 +159,9 @@ sub _prebuild_rules {
 ######################################################
 ## Search methods
 ######################################################
+#*************************
+## Find Rules matching object (containing it)
+#*************************
 sub find_rules_matching_ipaddr_or_ipnet_or_range {
 	my ( $self, $field, $ipaddr ) = @_;
 	my @a = split('-',$ipaddr);
@@ -170,7 +173,7 @@ sub find_rules_matching_ipaddr_or_ipnet_or_range {
 		return [] unless is_valid_ip_or_network($ipaddr);		
 		return $self->select_rules_matching_ipaddr_or_ipnet( $field, $ipaddr );
 	}
-}	# return: array of rules id
+}	# return: array of rules seq
 
 sub find_rules_matching_service_or_servicerange {
 	my ( $self, $service ) = @_;
@@ -178,10 +181,45 @@ sub find_rules_matching_service_or_servicerange {
 		return $self->select_rules_matching_service( $1, $2 );
 	} elsif ( $service && $service =~ m/^(TCP|UDP)[\-_](\d+)[\-_](\d+)$/i ) {	
 		return $self->select_rules_matching_servicerange( $1, $2, $3 );
+	} elsif ( $service && $service =~ m/^\d+$/i ) {
+		return $self->select_rules_matching_port( $service );
+	} elsif ( $service && $service =~ m/^(\d+)[\-_](\d+)$/i ) {	
+		return $self->select_rules_matching_portrange( $1, $2 );
 	} else {
 		return [];
 	}
-}	# return: array of rules id
+}	# return: array of rules seq
+
+#*************************
+## Find Rules with object (exact match)
+#*************************
+sub find_rules_with_ipaddr_or_ipnet_or_range {
+	my ( $self, $field, $ipaddr ) = @_;
+	my @a = split('-',$ipaddr);
+	if ( @a == 2 ) {
+		my ( $ipaddr_low, $ipaddr_high ) = @a;
+		return [] unless is_valid_ip($ipaddr_low) && is_valid_ip($ipaddr_high);
+		return $self->select_rules_with_iprange( $field, $ipaddr_low, $ipaddr_high );
+	} else {
+		return [] unless is_valid_ip_or_network($ipaddr);		
+		return $self->select_rules_with_ipaddr_or_ipnet( $field, $ipaddr );
+	}
+}	# return: array of rules seq
+
+sub find_rules_with_service_or_servicerange {
+	my ( $self, $service ) = @_;
+	if ( $service && $service =~ m/^(TCP|UDP)[\-_](\d+)$/i ) {
+		return $self->select_rules_with_service( $1, $2 );
+	} elsif ( $service && $service =~ m/^(TCP|UDP)[\-_](\d+)[\-_](\d+)$/i ) {	
+		return $self->select_rules_with_servicerange( $1, $2, $3 );
+	} elsif ( $service && $service =~ m/^\d+$/i ) {	
+		return $self->select_rules_with_port( $service );
+	} elsif ( $service && $service =~ m/^(\d+)[\-_](\d+)$/i ) {	
+		return $self->select_rules_with_portrange( $1, $2 );
+	} else {
+		return [];
+	}
+}	# return: array of rules seq
 
 
 ######################################################
@@ -195,9 +233,13 @@ sub get_all_rules {
 	return $_[0]->select_all_rules;
 }
 
+sub get_rules_from_seq {		## array of rules seq
+	return $_[0]->select_rules($_[1]);
+}
+
 
 ##################################################################
-## BUILD RULES
+## BUILD RULES (only used during mapping)
 ##################################################################
 sub build_rules {
 	my ( $self, $rules ) = @_;
