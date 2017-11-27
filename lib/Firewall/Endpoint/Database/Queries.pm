@@ -498,7 +498,7 @@ _SQL_
 ## SELECT
 ##################################################################
 #*************************
-## Find Rules
+## Find Rules matching object (containing it)
 #*************************
 sub select_rules_matching_ipaddr_or_ipnet {
 	my ( $self, $field , $ipaddr) = @_;
@@ -726,6 +726,81 @@ _SQL_
 	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $protocol, $port );		# array of rules id
 }
 
+sub select_rules_matching_port {
+	my ( $self, $port ) = @_;
+	# VALUES: fw_id, port
+my $SQL = <<_SQL_;
+WITH matched_rules AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND (
+			( os.port = \$2 ) OR
+			( os.port_low <= \$2 AND os.port_high >= \$2 )
+		  )
+),
+rules_with_obj_with_exclusion AS (
+	SELECT
+		mor.rule_id
+	FROM mapping_obj_rule mor
+	INNER JOIN objects o ON o.id = mor.obj_id
+	INNER JOIN obj_service os ON o.id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND
+		  o.type = 'servicegroup_with_exclusion'
+),
+rules_with_negate AS (
+	SELECT 
+		mor.rule_id
+	FROM mapping_obj_rule mor
+	INNER JOIN objects o ON o.id = mor.obj_id
+	INNER JOIN obj_service os ON o.id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND
+		  mor.negate AND
+		  mor.rule_id NOT IN ( SELECT * FROM rules_with_obj_with_exclusion )
+),
+matched_rules_with_negate AS (
+	SELECT DISTINCT
+		mor.rule_id
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE mor.rule_id IN ( SELECT * FROM rules_with_negate ) AND (
+			( os.port = \$2 ) OR
+			( os.port_low <= \$2 AND os.port_high >= \$2 )
+		  )
+)
+SELECT
+	r.seq
+FROM (
+	SELECT
+		rule_id
+	FROM matched_rules
+	WHERE NOT negate 
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules
+	WHERE negate
+	UNION
+	SELECT
+		rule_id
+	FROM rules_with_negate
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules_with_negate
+) q1
+INNER JOIN rules r ON q1.rule_id = r.id
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $port );		# array of rules id
+}
+
 sub select_rules_matching_servicerange {
 	my ( $self, $protocol, $port_low, $port_high ) = @_;
 	# VALUES: fw_id, protocol, port_low, port_high
@@ -804,6 +879,401 @@ _SQL_
 	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $protocol, $port_low, $port_high );		# array of rules id
 }
 
+sub select_rules_matching_portrange {
+	my ( $self, $port_low, $port_high ) = @_;
+	# VALUES: fw_id, port_low, port_high
+my $SQL = <<_SQL_;
+WITH matched_rules AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND
+		  os.port_low <= \$2 AND
+		  os.port_high >= \$3 AND
+		  \$2 < \$3
+),
+rules_with_obj_with_exclusion AS (
+	SELECT
+		mor.rule_id
+	FROM mapping_obj_rule mor
+	INNER JOIN objects o ON o.id = mor.obj_id
+	INNER JOIN obj_service os ON o.id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND
+		  o.type = 'servicegroup_with_exclusion'
+),
+rules_with_negate AS (
+	SELECT 
+		mor.rule_id
+	FROM mapping_obj_rule mor
+	INNER JOIN objects o ON o.id = mor.obj_id
+	INNER JOIN obj_service os ON o.id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND
+		  mor.negate AND
+		  mor.rule_id NOT IN ( SELECT * FROM rules_with_obj_with_exclusion )
+),
+matched_rules_with_negate AS (
+	SELECT DISTINCT
+		mor.rule_id
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE mor.rule_id IN ( SELECT * FROM rules_with_negate ) AND
+		  os.port_low <= \$2 AND
+		  os.port_high >= \$3 AND
+		  \$2 < \$3
+)
+SELECT
+	r.seq
+FROM (
+	SELECT
+		rule_id
+	FROM matched_rules
+	WHERE NOT negate 
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules
+	WHERE negate
+	UNION
+	SELECT
+		rule_id
+	FROM rules_with_negate
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules_with_negate
+) q1
+INNER JOIN rules r ON q1.rule_id = r.id
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $port_low, $port_high );		# array of rules id
+}
+
+
+#*************************
+## Find Rules with object (exact match)
+#*************************
+sub select_rules_with_ipaddr_or_ipnet {
+	my ( $self, $field , $ipaddr) = @_;
+	# VALUES: fw_id, ipaddr
+my $SQL = <<_SQL_;
+WITH matched_rules AS (
+	SELECT DISTINCT
+		mor.rule_id
+	FROM obj_ipaddr oip
+	INNER JOIN objects o ON o.id = oip.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = oip.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = \$2 AND
+		  oip.ipaddr = \$3 AND
+		  NOT negate
+),
+matched_rules_negate AS (
+	SELECT DISTINCT
+		mor.rule_id
+	FROM obj_ipaddr oip
+	INNER JOIN objects o ON o.id = oip.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = oip.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = \$2 AND (
+			( oip.ipaddr >>= \$3 ) OR
+			( oip.ipaddr_low <= \$3 AND oip.ipaddr_high >= \$3  )
+		  ) AND
+		  negate
+)
+SELECT
+	r.seq
+FROM (
+	SELECT
+		rule_id
+	FROM matched_rules
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules_negate
+) q1
+INNER JOIN rules r ON q1.rule_id = r.id
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $field, $ipaddr );		# array of rules id
+}
+
+sub select_rules_with_iprange {
+	my ( $self, $field, $ipaddr_low, $ipaddr_high ) = @_;
+	# VALUES: fw_id, ipaddr_low, ipaddr_high
+my $SQL = <<_SQL_;
+WITH matched_rules AS (
+	SELECT DISTINCT
+		mor.rule_id
+	FROM obj_ipaddr oip
+	INNER JOIN objects o ON o.id = oip.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = oip.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = \$2 AND
+		  ( oip.ipaddr_low = \$3 AND oip.ipaddr_high = \$4 ) AND
+		  inet(\$3) <= inet(\$4) AND
+		  NOT negate
+),
+matched_rules_negate AS (
+	SELECT DISTINCT
+		mor.rule_id
+	FROM obj_ipaddr oip
+	INNER JOIN objects o ON o.id = oip.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = oip.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = \$2 AND (
+			( oip.ipaddr >>= \$3 AND oip.ipaddr >>= \$4 ) OR
+			( oip.ipaddr_low <= \$3 AND oip.ipaddr_high >= \$4  )
+		  ) AND
+		  inet(\$3) <= inet(\$4) AND
+		  negate
+)
+SELECT
+	r.seq
+FROM (
+	SELECT
+		rule_id
+	FROM matched_rules
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules_negate
+) q1
+INNER JOIN rules r ON q1.rule_id = r.id
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $field, $ipaddr_low, $ipaddr_high );		# array of rules id
+}
+
+sub select_rules_with_service {
+	my ( $self, $protocol, $port ) = @_;
+	# VALUES: fw_id, port
+my $SQL = <<_SQL_;
+WITH matched_rules AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  os.protocol = \$2 AND
+		  mor.field = 'service' AND
+		  os.port = \$3 AND
+		  NOT negate
+),
+matched_rules_negate AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  os.protocol = \$2 AND
+		  mor.field = 'service' AND (
+			( os.port = \$3 ) OR
+			( os.port_low <= \$3 AND os.port_high >= \$3 )
+		  ) AND
+		  negate
+)
+SELECT
+	r.seq
+FROM (
+	SELECT
+		rule_id
+	FROM matched_rules
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules_negate
+) q1
+INNER JOIN rules r ON q1.rule_id = r.id
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $protocol, $port );		# array of rules id
+}
+
+sub select_rules_with_port {
+	my ( $self, $port ) = @_;
+	# VALUES: fw_id, port
+my $SQL = <<_SQL_;
+WITH matched_rules AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND
+		  os.port = \$2 AND
+		  NOT negate
+),
+matched_rules_negate AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND (
+			( os.port = \$2 ) OR
+			( os.port_low <= \$2 AND os.port_high >= \$2 )
+		  ) AND
+		  negate
+)
+SELECT
+	r.seq
+FROM (
+	SELECT
+		rule_id
+	FROM matched_rules
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules_negate
+) q1
+INNER JOIN rules r ON q1.rule_id = r.id
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $port );		# array of rules id
+}
+
+sub select_rules_with_servicerange {
+	my ( $self, $protocol, $port_low, $port_high ) = @_;
+	# VALUES: fw_id, protocol, port_low, port_high
+my $SQL = <<_SQL_;
+WITH matched_rules AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  os.protocol = \$2 AND
+		  mor.field = 'service' AND
+		  os.port_low = \$3 AND
+		  os.port_high = \$4 AND
+		  \$3 < \$4 AND
+		  NOT negate
+),
+matched_rules_negate AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  os.protocol = \$2 AND
+		  mor.field = 'service' AND
+		  os.port_low <= \$3 AND
+		  os.port_high >= \$4 AND
+		  \$3 < \$4 AND
+		  negate
+)
+SELECT
+	r.seq
+FROM (
+	SELECT
+		rule_id
+	FROM matched_rules
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules_negate
+) q1
+INNER JOIN rules r ON q1.rule_id = r.id
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $protocol, $port_low, $port_high );		# array of rules id
+}
+
+sub select_rules_with_portrange {
+	my ( $self, $port_low, $port_high ) = @_;
+	# VALUES: fw_id, port_low, port_high
+my $SQL = <<_SQL_;
+WITH matched_rules AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND
+		  os.port_low = \$2 AND
+		  os.port_high = \$3 AND
+		  \$2 < \$3 AND
+		  NOT negate
+),
+matched_rules_negate AS (
+	SELECT DISTINCT
+		mor.rule_id,
+		mor.negate
+	FROM obj_service os
+	INNER JOIN objects o ON o.id = os.obj_id
+	INNER JOIN mapping_obj_rule mor ON mor.obj_id = os.obj_id
+	WHERE o.fw_id = \$1 AND
+		  mor.field = 'service' AND
+		  os.port_low <= \$2 AND
+		  os.port_high >= \$3 AND
+		  \$2 < \$3 AND
+		  negate
+)
+SELECT
+	r.seq
+FROM (
+	SELECT
+		rule_id
+	FROM matched_rules
+	EXCEPT
+	SELECT
+		rule_id
+	FROM matched_rules_negate
+) q1
+INNER JOIN rules r ON q1.rule_id = r.id
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, $port_low, $port_high );		# array of rules id
+}
+
+
+#*************************
+## Find Rules contained by object
+#*************************
+
+
+
+#*************************
+## Get rules
+#*************************
+sub select_number_of_rules {
+	my $self = shift;
+	# VALUES: fw_id
+my $SQL = <<_SQL_;
+SELECT
+	max(seq)
+FROM rules
+WHERE fw_id = ?
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id )->[0];	# nb
+}
+
+sub select_number_of_rules_nat {
+	my $self = shift;
+	# VALUES: fw_id
+my $SQL = <<_SQL_;
+SELECT
+	max(seq)
+FROM rules_nat
+WHERE fw_id = ?
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id )->[0];	# nb
+}
+
 sub select_all_rules_seq {
 	my $self = shift;
 	# VALUES: fw_id
@@ -827,7 +1297,21 @@ FROM rules
 WHERE fw_id = ?
 ORDER BY seq ASC
 _SQL_
-	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id );		# array of prebuilt rules
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id );	# [ARRAY] prebuilt rules
+}
+
+sub select_rules {
+	my ( $self, $vals ) = @_;
+	# VALUES: fw_id, array of rules seq
+my $where_in = join(',', ('?') x @$vals);
+my $SQL = <<_SQL_;
+SELECT
+	prebuilt
+FROM rules
+WHERE fw_id = ? AND seq IN ( ${where_in} )
+ORDER BY seq ASC
+_SQL_
+	return $self->dbh->selectcol_arrayref( $SQL, {}, $self->fw_id, @$vals );	# [ARRAY] prebuilt rules
 }
 
 
@@ -836,7 +1320,7 @@ _SQL_
 #*************************
 sub select_rules_obj {
 	my ( $self, $rules ) = @_;
-	# VALUES: fw_id, array of rules
+	# VALUES: fw_id, array of rules seq
 my $SQL = "
 SELECT
 	r.seq,
@@ -873,7 +1357,7 @@ WHERE fw_id = ? AND seq IN (".join(',', ('?') x @$rules).")
 #*************************
 ## Objects
 #*************************
-sub select_ipgroup {
+sub select_ipgroup_by_id {
 	my ( $self, $vals ) = @_;
 	# VALUES: array of obj_id
 my $where_in = join(',', ('?') x @$vals);
@@ -907,7 +1391,7 @@ _SQL_
 	return $self->dbh->selectall_arrayref( $SQL, {}, @$vals );	# [ARRAY] 0:parent_id, 1:obj_type, 2:obj_id, 3:obj_name, 4:obj_negate
 }
 
-sub select_servicegroup {
+sub select_servicegroup_by_id {
 	my ( $self, $vals ) = @_;
 	# VALUES: array of obj_id
 my $where_in = join(',', ('?') x @$vals);
@@ -941,7 +1425,7 @@ _SQL_
 	return $self->dbh->selectall_arrayref( $SQL, {}, @$vals );	# [ARRAY] 0:parent_id, 1:obj_type, 2:obj_id, 3:negate
 }
 
-sub select_ipaddr {
+sub select_ipaddr_by_id {
 	my ( $self, $vals ) = @_;
 	# VALUES: array of obj_id
 my $SQL = "
@@ -956,7 +1440,7 @@ WHERE obj_id IN (".join(',', ('?') x @$vals).")
 	return $self->dbh->selectall_arrayref( $SQL, {}, @$vals );
 }
 
-sub select_iprange {
+sub select_iprange_by_id {
 	my ( $self, $vals ) = @_;
 	# VALUES: array of obj_id
 my $SQL = "
@@ -971,7 +1455,7 @@ WHERE obj_id IN (".join(',', ('?') x @$vals).")
 	return $self->dbh->selectall_arrayref( $SQL, {}, @$vals );
 }
 
-sub select_service {
+sub select_service_by_id {
 	my ( $self, $vals ) = @_;
 	# VALUES: array of obj_id
 my $SQL = "
@@ -988,7 +1472,7 @@ WHERE obj_id IN (".join(',', ('?') x @$vals).")
 	return $self->dbh->selectall_arrayref( $SQL, {}, @$vals );
 }
 
-sub select_servicerange {
+sub select_servicerange_by_id {
 	my ( $self, $vals ) = @_;
 	# VALUES: array of obj_id
 my $SQL = "

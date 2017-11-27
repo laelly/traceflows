@@ -159,6 +159,9 @@ sub _prebuild_rules {
 ######################################################
 ## Search methods
 ######################################################
+#*************************
+## Find Rules matching object (containing it)
+#*************************
 sub find_rules_matching_ipaddr_or_ipnet_or_range {
 	my ( $self, $field, $ipaddr ) = @_;
 	my @a = split('-',$ipaddr);
@@ -170,7 +173,7 @@ sub find_rules_matching_ipaddr_or_ipnet_or_range {
 		return [] unless is_valid_ip_or_network($ipaddr);		
 		return $self->select_rules_matching_ipaddr_or_ipnet( $field, $ipaddr );
 	}
-}	# return: array of rules id
+}	# return: array of rules seq
 
 sub find_rules_matching_service_or_servicerange {
 	my ( $self, $service ) = @_;
@@ -178,10 +181,45 @@ sub find_rules_matching_service_or_servicerange {
 		return $self->select_rules_matching_service( $1, $2 );
 	} elsif ( $service && $service =~ m/^(TCP|UDP)[\-_](\d+)[\-_](\d+)$/i ) {	
 		return $self->select_rules_matching_servicerange( $1, $2, $3 );
+	} elsif ( $service && $service =~ m/^\d+$/i ) {
+		return $self->select_rules_matching_port( $service );
+	} elsif ( $service && $service =~ m/^(\d+)[\-_](\d+)$/i ) {	
+		return $self->select_rules_matching_portrange( $1, $2 );
 	} else {
 		return [];
 	}
-}	# return: array of rules id
+}	# return: array of rules seq
+
+#*************************
+## Find Rules with object (exact match)
+#*************************
+sub find_rules_with_ipaddr_or_ipnet_or_range {
+	my ( $self, $field, $ipaddr ) = @_;
+	my @a = split('-',$ipaddr);
+	if ( @a == 2 ) {
+		my ( $ipaddr_low, $ipaddr_high ) = @a;
+		return [] unless is_valid_ip($ipaddr_low) && is_valid_ip($ipaddr_high);
+		return $self->select_rules_with_iprange( $field, $ipaddr_low, $ipaddr_high );
+	} else {
+		return [] unless is_valid_ip_or_network($ipaddr);		
+		return $self->select_rules_with_ipaddr_or_ipnet( $field, $ipaddr );
+	}
+}	# return: array of rules seq
+
+sub find_rules_with_service_or_servicerange {
+	my ( $self, $service ) = @_;
+	if ( $service && $service =~ m/^(TCP|UDP)[\-_](\d+)$/i ) {
+		return $self->select_rules_with_service( $1, $2 );
+	} elsif ( $service && $service =~ m/^(TCP|UDP)[\-_](\d+)[\-_](\d+)$/i ) {	
+		return $self->select_rules_with_servicerange( $1, $2, $3 );
+	} elsif ( $service && $service =~ m/^\d+$/i ) {	
+		return $self->select_rules_with_port( $service );
+	} elsif ( $service && $service =~ m/^(\d+)[\-_](\d+)$/i ) {	
+		return $self->select_rules_with_portrange( $1, $2 );
+	} else {
+		return [];
+	}
+}	# return: array of rules seq
 
 
 ######################################################
@@ -195,9 +233,22 @@ sub get_all_rules {
 	return $_[0]->select_all_rules;
 }
 
+sub get_rules_from_seq {		## array of rules seq
+	return $_[0]->select_rules($_[1]);
+}
+
+sub nb_rules {		## nb
+	$_[0]->{STATS}{nb_rules} //= $_[0]->select_number_of_rules($_[1]);
+	return $_[0]->{STATS}{nb_rules};
+}
+sub nb_rules_nat {		## nb
+	$_[0]->{STATS}{nb_rules_nat} //= $_[0]->select_number_of_rules_nat($_[1]);
+	return $_[0]->{STATS}{nb_rules_nat};
+}
+
 
 ##################################################################
-## BUILD RULES
+## BUILD RULES (only used during mapping)
 ##################################################################
 sub build_rules {
 	my ( $self, $rules ) = @_;
@@ -215,7 +266,7 @@ sub build_rules {
 	## Query object groups
 	foreach my $type ( qw( ipgroup ipgroup_with_exclusion servicegroup ) ) {
 		next unless $htmp{$type};	## skip if empty
-		my $select_func = $type eq 'servicegroup' ? 'select_servicegroup' : 'select_ipgroup';
+		my $select_func = $type eq 'servicegroup' ? 'select_servicegroup_by_id' : 'select_ipgroup_by_id';
 		my $groups = $self->$select_func( $htmp{$type}  );	# [ARRAY] 0:parent_id, 1:obj_type, 2:obj_id, 3:obj_name, 4:obj_negate
 		foreach ( @$groups ) {
 			push @{$hgroup{$type}{$_->[0]}}, {	# 0:parent_id, 1:obj_type, 2:obj_id, 3:obj_name, 4:obj_negate
@@ -247,24 +298,24 @@ sub build_rules {
 	foreach my $type ( keys %htmp ) {	# servicegroup, service, ipnet, iprange, ipaddr, ipgroup, servicerange, ipgroup_with_exclusion
 		next unless $htmp{$type};
 		if ( $type eq 'ipaddr' or $type eq 'ipnet' ) {
-			my $a = $self->select_ipaddr( $htmp{$type} );
+			my $a = $self->select_ipaddr_by_id( $htmp{$type} );
 			foreach ( @$a ) {				# 0: obj_id, 1: name, 2: value
 				push @{$hobj{$type}{$_->[0]}{value}}, $_->[2];
 			}
 		} elsif ( $type eq 'iprange' ) {
-			my $a = $self->select_iprange( $htmp{$type} );
+			my $a = $self->select_iprange_by_id( $htmp{$type} );
 			foreach ( @$a ) {				# 0: obj_id, 1: name, 2: value 
 				push @{$hobj{$type}{$_->[0]}{value}}, $_->[2];
 			}
 		} elsif ( $type eq 'ipgroup' || $type eq 'ipgroup_with_exclusion' || $type eq 'servicegroup' ) {
 			# skip (already done above)
 		} elsif ( $type eq 'service' ) {
-			my $a = $self->select_service( $htmp{$type} );
+			my $a = $self->select_service_by_id( $htmp{$type} );
 			foreach ( @$a ) {				# 0: obj_id, 1: name, 2: value 
 				push @{$hobj{$type}{$_->[0]}{value}}, $_->[2];
 			}
 		} elsif ( $type eq 'servicerange' ) {
-			my $a = $self->select_servicerange( $htmp{$type} );
+			my $a = $self->select_servicerange_by_id( $htmp{$type} );
 			foreach ( @$a ) {				# 0: obj_id, 1: name, 2: value
 				push @{$hobj{$type}{$_->[0]}{value}}, $_->[2];
 			}

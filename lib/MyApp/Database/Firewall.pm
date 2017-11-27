@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use base 'Mojolicious::Plugin';
 use Firewall;
+use Mojo::Util qw(xml_escape);
 
 
 ##################################################
@@ -95,7 +96,7 @@ sub new_firewall {
 	my ( $self, $name ) = @_;
 	
 	my $fw_data = $self->select_firewall( { name => $name } );
-	( warn "Firewall '".($name||'')."'does not exist, can't create it...\n" and return undef ) unless @$fw_data;
+	( warn "Firewall '".($name||'')."' does not exist, can't create it...\n" and return undef ) unless @$fw_data;
 	my $fw = Firewall->new(
 		type => $fw_data->[0]{type},
 		name => $fw_data->[0]{name},

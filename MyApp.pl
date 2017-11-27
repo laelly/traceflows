@@ -61,21 +61,6 @@ get "/" => sub {
 	my $c = shift;
 	$c->redirect_to('/home');
 };
-get "/home" => sub {
-	my $c = shift;
-	my $user = { uid => 'test', role => 'admin' };
-	$c->render(template => 'home', format => 'html', user => $user, status => [], checked => [] );
-	# if ($c->check_if_authenticated ) {
-		# my $user = $c->current_user;	# hash ref as returned by 'load_user' routine
-		# $c->render(template => 'home', format => 'html', user => $user, status => [], checked => [ '' ] );
-	# } else {
-		# $c->redirect_to('/login');
-	# }
-};
-post "/home" => sub {
-	my $c = shift;
-	$c->render(text => 'Oops.', status => 404);
-};
 
 
 #***************************************
@@ -86,8 +71,8 @@ get('/API/firewalls')->to('API#firewalls');
 any('/API/rules')->to('API#rules');
 
 ## Inventaire
-# get('/inventory')->to('GUI#inventory');
-# post('/inventory')->to('GUI#inventory_post');
+get('/home')->to('GUI#home');
+any('/query')->to('GUI#query');
 
 
 

@@ -1,4 +1,13 @@
 //###################################
+// jQuery function
+//###################################
+$.fn.textWidth = function(text, font) {
+	if (!$.fn.textWidth.fakeEl) $.fn.textWidth.fakeEl = $('<span>').hide().appendTo(document.body);
+	$.fn.textWidth.fakeEl.text(text || this.val() || this.text()).css('font', font || this.css('font'));
+	return $.fn.textWidth.fakeEl.width();
+};
+
+//###################################
 // Datatable - LANGUAGE
 //###################################
 var dt_language_FR = {
@@ -19,6 +28,7 @@ var dt_language_FR = {
 	"thousands": "",
 	"loadingRecords": "Chargement des donn&eacute;es en cours...",
 	"infoFiltered":   "(filtr&eacute; sur un total de <b>_MAX_</b>)",
+	"emptyTable": "Aucun r&eacute;sultat trouv&eacute;"
 };
 
 var dt_language_EN = {
@@ -28,7 +38,8 @@ var dt_language_EN = {
 		'<option value="50">50</option>'+
 		'<option value="-1">All</option>'+
 		'</select> entries',
-	"loadingRecords": "Loading data..."
+	"loadingRecords": "Loading data...",
+	"emptyTable": "No result found"
 };
 
 
@@ -80,9 +91,9 @@ var dt_button_csv = {
 
 
 //###################################
-// Bind event handler
+// Datatable - table
 //###################################
-function init_dataTables() {
+function init_dt_rules() {
 	var table = $('#table_rules').DataTable( {
 		// order: [[ 0, "asc" ]],
 		aaSorting: [],	// do not sort by default
@@ -106,6 +117,15 @@ function init_dataTables() {
 				render: function ( data ) {
 					return '<div class="headers_row">'+data+'</div>';
 				},
+				createdCell: function (td, data, row) {
+					if ( row['action'] == 'allow' ) {
+						$(td).addClass('cell_green');
+						row['enable'] == 0 ? $(td).addClass('cell_bg_disabled') : $(td).addClass('cell_bg_green');
+					} else if ( row['action'] == 'drop' || data == 'deny' ) {
+						$(td).addClass('cell_red');
+						row['enable'] == 0 ? $(td).addClass('cell_bg_disabled') : $(td).addClass('cell_bg_red');
+					} else {}
+				},
 				className: 'cell_center'
 			},{
 				data: "enable",
@@ -116,7 +136,7 @@ function init_dataTables() {
 				visible: false
 			},{
 				data: "action",
-				createdCell: function (td, data) { 
+				createdCell: function (td, data, row) {
 					if ( data == 'allow' ) {
 						$(td).addClass('cell_green');
 					} else if ( data == 'drop' || data == 'deny' ) {
@@ -151,17 +171,21 @@ function init_dataTables() {
 		ajax: {
 			url: '/API/rules',
 			type: 'POST',
-			data: function ( d ) {
-				d.fw = 'test';
+			data: dt_rules_ajax_data,
+			dataType: 'json',
+			dataSrc: function (json) {
+				if ( json.error_message ) { alert_message_error(json.error_message); }
+				return json.rules;
 			},
-			dataSrc: 'rules',
             error: function (jqXHR) {
 				if (jqXHR.status == 403) {			// Unauthenticated
 					alert_message_error('Not authenticated, redirecting to login page...');
 					window.location.replace('/login');
-				} else if ( jqXHR.status == 0 ) {
+				} else if ( jqXHR.status == 400 && jqXHR.responseText ) {		// Malformed request
+					alert_message_error('Unable to initialize Datatable. Bad request - '+jqXHR.responseText);
+				} else if ( jqXHR.status == 0 ) {		// Timeout
 					alert_message_error('Unable to initialize Datatable. No answer from server for url '+this.url);
-				} else {
+				} else {		// Generic
 					alert_message_error('Unable to initialize Datatable. '+jqXHR.status+' '+jqXHR.statusText+' on url '+this.url);
 				}
 				$('#table_rules tbody > tr > td').first().html('Error: Unable to fetch data...');
@@ -179,11 +203,15 @@ function init_dataTables() {
 			} else {
 				$(row).addClass('row_hoverhighlight');
 			}
-			$(row).addClass( 'toggle_section_'+data['section'].replace(/[^a-zA-Z0-9_-]/g,'_') );
 		}
 	} );
 }
 
+function dt_rules_ajax_data(d) {
+	// variables provided in response to a POST query to /home 
+	d.fw = dt_rules_data_fw;
+	d.rules = dt_rules_data_rules;
+}
 
 //###################################
 // Functions
@@ -305,39 +333,69 @@ function alert_message_error (message) {
 		// $("#TF_errorbox .alert").last().hide().fadeIn(200).delay(30000).fadeOut(1000, function () { $(this).remove(); });
 }
 
+function clearSelection() {
+	if(document.selection && document.selection.empty) {
+		document.selection.empty();
+	} else if(window.getSelection) {
+		var sel = window.getSelection();
+		sel.removeAllRanges();
+	}
+}
+
+function set_auto_columnWidth() {
+	var add_width = 5;
+	$( '.column_auto' ).each( function() {
+		var max_width = 0;
+		$(this).children( "span.rank_rule_container" ).each( function() {
+			var width = parseInt($(this).textWidth()) + add_width;
+			if (width > max_width) { max_width = width; }
+		});
+		$(this).css({
+			'columnWidth': 				max_width+"px",
+			'-webkit-column-width':	max_width+"px",
+			'-moz-column-width':		max_width+"px"
+		});
+	});
+}
+
 //###################################
 // Trace! Button
 //###################################
 function sendRequest () {
-	$.post( '/home', { query: "test", data: "ok!" }, function( data ) {
-		// $( ".result" ).html( data );
+	$.post( '/query', {
+			query: $('#TF_input_textarea').val(),
+			fw: "test"
+		},
+		function( data ) {
+			$( "#TF_content" ).html( data );
 	});
-	// $.ajax({
-		// type: "POST",
-		// url: 'home',
-		// data: 'query=test',
-		// success: success,
-		// dataType: dataType
-	// });
 }
 
 $.ajaxSetup({
     error: function (jqXHR) {
-        if (jqXHR.status == 403) {			// Unauthenticated
+        if (jqXHR.status == 403) {					// Unauthenticated
 			alert_message_error('Not authenticated, redirecting to login page...');
 			window.location.replace('/login');
-		} else if ( jqXHR.status == 0 ) {
+		} else if ( jqXHR.status == 400 && jqXHR.responseText) {		// Malformed request
+			alert_message_error('Bad request. '+jqXHR.responseText);
+		} else if ( jqXHR.status == 0 ) {			// Timeout
 			alert_message_error('No answer from server for url '+this.url);
-        } else {
+        } else {		// Generic
 			alert_message_error(jqXHR.status+' '+jqXHR.statusText+' on url '+this.url);
 		}
     }
 });
 
+
 //###################################
 // Bind event handler
 //###################################
-function bindEventHandlers() {
+function rulesEvents() {
+	/**********************
+	// Initialize datatable
+	**********************/
+	init_dt_rules();
+	
 	/**********************
 	// Click event on objects
 	**********************/
@@ -349,6 +407,7 @@ function bindEventHandlers() {
 	$('#table_rules tbody').on("dblclick", "td", function(event){				/* on doubleclick */
 		var obj = $(this).find('.obj_content_container');
 		obj.first().hasClass('hidden') ?	obj.removeClass('hidden') : obj.addClass('hidden');
+		clearSelection();
 	});
 	$('#table_rules tbody').on( 'click', 'tr.group', function () {		// collapse rows from given rowgroup on click
 		if ( getSelection().toString() ) { return; }		// exit event if click is made for selecting text
@@ -356,25 +415,53 @@ function bindEventHandlers() {
 		$(this).next().hasClass('hidden') ?	$(rows).removeClass('hidden') : $(rows).addClass('hidden');
 	});
 	$('#table_rules tbody').on( 'dblclick', 'tr.group', function () {		// collapse all rowgroups on dblclick
-		$(this).next().hasClass('hidden') ?	$('#table_rules tbody tr:not(.group)').removeClass('hidden') :
-															$('#table_rules tbody tr:not(.group)').addClass('hidden');
+		$(this).next().hasClass('hidden') ?	$('#table_rules tbody tr:not(.group)').addClass('hidden') :
+															$('#table_rules tbody tr:not(.group)').removeClass('hidden');
+	});
+}
+
+function bindEventHandlers() {
+	/**********************
+	// Text area background
+	**********************/
+	$('#TF_input_textarea').on( 'input', function() {
+		if ( $( this ).hasClass('hidebackground') ) {
+			if ( this.value.length == 0 ) {
+				$( this ).removeClass('hidebackground');
+			}
+		} else {
+			if ( this.value.length > 0 ) {
+				$( this ).addClass('hidebackground');
+			}
+		}
 	});
 	
 	/**********************
-	// Alert messages
+	// Tooltip & popover
 	**********************/
-	
-	/**********************
-	// Tooltip
-	**********************/
-	$('[data-toggle="tooltip"]').tooltip();
+	$('[data-toggle="tooltip"]').tooltip();	// for tooltips outside #TF_content
+	$('#TF_content').tooltip({
+		selector: '[data-toggle="tooltip"]'
+	});
+	$('#TF_content').on('click', '[data-toggle="popover"], .popover', function(e) {
+		console.log('click');
+		e.preventDefault();
+		return false;
+	});
+	$('#TF_content').popover({
+		selector: '[data-toggle="popover"]',
+		trigger: 'focus',
+		content: function() {
+			return $( '#'+this.id+'_content' ).html();
+		},
+		html: true
+	});
 }
 
 //###################################
 // On Page ready
 //###################################
-$(document).ready(function() {
-	init_dataTables();
+$(document).ready(function() {		
 	bindEventHandlers();
 });
 

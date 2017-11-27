@@ -1,0 +1,70 @@
+<div class="panel panel-default">
+	<div class="panel-heading TF_panel_collapsable" data-toggle="collapse" data-target="#panel_rank">
+		<h3 class="panel-title">Rank&nbsp;&nbsp;
+			<a id="rank_helper" href="#" tabindex="-1" title="Rank Helper" data-toggle="popover" data-placement="right">
+				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="top" title="Show Help"></span>
+			</a>
+		</h3>
+		%##############################
+		%# rank helper popover content
+		<div id="rank_helper_content" style="display:none;">
+			Example:<br>
+			<span class="rank_rule_container">
+				<a class="rule_number">57</a>
+				<div class="rank_field_container"><div class="rank_match_number">3</div><div class="rank_exact_number">(2)</div>&nbsp;<div class="rank_field">src</div></div>
+				<div class="rank_field_container"><div class="rank_match_number">2</div><div class="rank_exact_number">(1)</div>&nbsp;<div class="rank_field">dst</div></div>
+				<div class="rank_field_container"><div class="rank_match_number">1</div>&nbsp;<div class="rank_field">srv</div></div>
+			</span>
+			<br>Description:
+			<ul class="rank_helper_content_list">
+				<li class="rank_rule_container">
+					<a class="rule_number">57</a>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="glyphicon">&#xe092;</span>&nbsp;&nbsp;Matched rule number
+				</li>
+				<li class="rank_rule_container">
+					<div><div class="rank_field_container"><div class="rank_match_number">3</div><div class="rank_exact_number">(2)</div>&nbsp;<div class="rank_field">src</div></div></div>
+					&nbsp;<span class="glyphicon">&#xe092;</span>&nbsp;&nbsp;3 of the searched sources are matching this rule with 2 of them being exact matches.
+				</li>
+				<li class="rank_rule_container">
+					<div><div class="rank_field_container"><div class="rank_match_number">2</div><div class="rank_exact_number">(1)</div>&nbsp;<div class="rank_field">dst</div></div></div>
+					&nbsp;<span class="glyphicon">&#xe092;</span>&nbsp;&nbsp;2 of the searched destinations are matching this rule with 1 of them being an exact match.
+				</li>
+				<li class="rank_rule_container">
+					<div><div class="rank_field_container"><div class="rank_match_number">1</div>&nbsp;<div class="rank_field">srv</div></div></div>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="glyphicon">&#xe092;</span>&nbsp;&nbsp;1 of the searched services is matching this rule and is not an exact match.
+				</li>
+			</ul>
+			<br>Notes:
+			<span class="rank_rule_container">A match is when the searched object is equal to or is contained in another object.</span>
+			<span class="rank_rule_container">An exact match is when the searched object is found as-is in the rule.</span>
+		</div>
+		%##############################
+	</div>
+	<div id="panel_rank" class="panel-body panel-collapse collapse in">
+		<table id="table_rank" class="TF_table table">
+			% my $rank = $parts->{rank};
+			% foreach my $num ( sort { $b <=> $a } keys %$rank ) {
+			<tr>
+				<td><div class="ws_pre row_header"><%= $num %> hits</div></td>				
+				<td style="width:95%">
+					<div class="column_auto">
+					% foreach my $val ( @{$rank->{$num}} ) {
+						% my $seq = $val->{seq};
+						<span class="rank_rule_container"><a class="rule_number" href="#rules?rules=<%= $seq %>"><%= $seq %></a>
+						% foreach my $field ( qw(src dst service) ) {
+							% next unless $val->{fields}{$field};
+							% my $out = '<div class="rank_match_number">'.$val->{fields}{$field}{match}.'</div>';
+							% $out .= '<div class="rank_exact_number">('.$val->{fields}{$field}{exact}.')</div>' if $val->{fields}{$field}{exact};
+							% $out .= '&nbsp;<div class="rank_field">'.($field eq 'service' ? 'srv' : $field).'</div>';
+							<div class="rank_field_container"><%== $out %></div>
+						% }
+						</span>
+					% }
+					</div>
+				</td>
+			</tr>
+			% }
+		</table>
+	</div>
+	<script>set_auto_columnWidth();</script>
+</div>
